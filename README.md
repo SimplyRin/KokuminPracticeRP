@@ -1,0 +1,2 @@
+# KokuminPracticeRP
+こくみんサーバーで戦ってる相手とかゲームタイプを Discord で表示してくれるよ
