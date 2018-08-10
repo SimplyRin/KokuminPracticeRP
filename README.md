@@ -5,7 +5,7 @@
 ![screenshot-1](https://i.gyazo.com/e1fc134b40b768ab9004521cfd9991f6.png)
 
 # Download
-二次配布禁止: [ダウンロード (KokuminPracticeRP-1.0.jar)](https://github.com/SimplyRin/KokuminPracticeRP/releases/download/1.0/KokuminPracticeRP-1.0.jar)
+二次配布禁止: [ダウンロード (KokuminPracticeRP-1.1.jar)](https://goo.gl/UhaAdN)
 
 # Open Source License
 **・DiscordIPC | Apache License 2.0**
