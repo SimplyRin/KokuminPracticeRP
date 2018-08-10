@@ -42,7 +42,7 @@ import net.simplyrin.kokuminpractice.rp.utils.ThreadPool;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-@Mod(modid = "KokuminPracitceRP", version = "1.0")
+@Mod(modid = "KokuminPracticeRP", version = "1.0")
 public class Main {
 
 	private IPCClient ipcClient;
@@ -93,28 +93,21 @@ public class Main {
 
 		if(args.length > 0) {
 			if(message.endsWith("has accepted your duel !") || message.endsWith("からのduelを申し受けました！")) {
-				System.out.println("Main.java : 1");
 				String opponent = args[0];
 				this.opponent = opponent;
 			}
 
 			if(message.startsWith("Starting duel against " + this.opponent + " Game: ")) {
-				System.out.println("Main.java : 2");
-
 				String game = message.split("Starting duel against " + this.opponent + " Game: ")[1];
 				this.game = game;
 				this.connect("Opponent: " + this.opponent, "Game: " + this.game);
 			}
 
 			if(message.equals("Match has ended !") || message.equals("試合が終了しました！")) {
-				System.out.println("Main.java : 3");
-
 				this.connect("Lobby", null);
 			}
 
 			if(message.startsWith("You queued on ") || message.endsWith(". Searching an opponent...")) {
-				System.out.println("Main.java : 4");
-
 				String game = args[3];
 				if(game.equals("No")) {
 					game = "No Debuff";
@@ -123,8 +116,6 @@ public class Main {
 			}
 
 			if(message.endsWith("に参加しました。プレイヤーが見つかりまでお待ち下さい")) {
-				System.out.println("Main.java : 5");
-
 				String game = message.split("に参加しました。プレイヤーが見つかりまでお待ち下さい")[0];
 				this.connect("Searching an opponent...", "Game: " + game);
 			}
