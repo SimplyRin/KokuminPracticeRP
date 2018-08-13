@@ -82,7 +82,10 @@ public class Main {
 		if(this.isKokumin) {
 			this.isKokumin = false;
 
-			DiscordRP.getInstance().updateDiscord();
+			try {
+				DiscordRP.getInstance().updateDiscord();
+			} catch (Exception e) {
+			}
 		}
 	}
 
