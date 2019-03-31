@@ -9,6 +9,10 @@ import com.jagrosh.discordipc.entities.RichPresence;
 import com.jagrosh.discordipc.exceptions.NoDiscordClientException;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.scoreboard.Score;
+import net.minecraft.scoreboard.ScoreObjective;
+import net.minecraft.scoreboard.ScorePlayerTeam;
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -42,16 +46,18 @@ import net.simplyrin.kokuminpractice.rp.utils.ThreadPool;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-@Mod(modid = "KokuminPracticeRP", version = "1.0")
+@Mod(modid = "KokuminPracitceRP", version = "1.2")
 public class Main {
 
 	private IPCClient ipcClient;
 
-	private boolean isKokumin;
+	private IPCClient _default;
+	private DiscordBuild discordBuild;
 
+	private boolean isKokumin;
 	private OffsetDateTime offsetDateTime;
+
 	private String opponent;
-	private String game;
 
 	@EventHandler
 	public void init(FMLInitializationEvent event) {
@@ -63,14 +69,17 @@ public class Main {
 		String address = event.manager.getRemoteAddress().toString().toLowerCase();
 		String serverIP = Minecraft.getMinecraft().getCurrentServerData().serverIP;
 
-		if(address.contains("kokum.info.tm") || serverIP.contains("kokumin.space")) {
+		if (address.contains("kokum.info.tm") || serverIP.contains("kokumin.space") || serverIP.contains("kokumin.work")) {
 			this.isKokumin = true;
 
 			try {
-				IPCClient ipcClient = DiscordRP.getInstance().getIpcClient();
-				ipcClient.close();
+				this._default = DiscordRP.getInstance().getIpcClient();
+				this.discordBuild = this._default.getDiscordBuild();
+				this._default.close();
 			} catch (Exception e) {
 			}
+
+			this.lobby(true);
 		}
 	}
 
@@ -79,12 +88,14 @@ public class Main {
 		this.offsetDateTime = null;
 		this.disconnect();
 
-		if(this.isKokumin) {
+		if (this.isKokumin) {
 			this.isKokumin = false;
 
-			try {
-				DiscordRP.getInstance().updateDiscord();
-			} catch (Exception e) {
+			if (this._default != null & this.discordBuild != null) {
+				try {
+					this._default.connect(this.discordBuild);
+				} catch (Exception e) {
+				}
 			}
 		}
 	}
@@ -94,40 +105,98 @@ public class Main {
 		String message = ChatColor.stripColor(event.message.getFormattedText());
 		String[] args = message.split(" ");
 
-		if(args.length > 0) {
-			if(message.endsWith("has accepted your duel !") || message.endsWith("からのduelを申し受けました！")) {
-				String opponent = args[0];
-				this.opponent = opponent;
+		if (args.length > 0) {
+			if (message.startsWith("[Match]") && (message.endsWith("があなたからのDuelを受けました！") || message.endsWith(" からのDuelを受け付けました！"))) {
+				String opponent = args[1];
+				this.connect("Opponent: " + opponent, null);
+				return;
 			}
 
-			if(message.startsWith("Starting duel against " + this.opponent + " Game: ")) {
-				String game = message.split("Starting duel against " + this.opponent + " Game: ")[1];
-				this.game = game;
-				this.connect("Opponent: " + this.opponent, "Game: " + this.game);
+			if (message.equals("[Match] Match has ended!")) {
+				this.lobby(false);
+				return;
 			}
 
-			if(message.equals("Match has ended !") || message.equals("試合が終了しました！")) {
-				this.connect("Lobby", null);
+			if (message.equals("[Match] キューに入りました。対戦相手が見つかるまでしばらくお待ちください...")) {
+				this.connect("Searching an opponent...", null);
+				return;
 			}
 
-			if(message.startsWith("You queued on ") || message.endsWith(". Searching an opponent...")) {
-				String game = args[3];
-				if(game.equals("No")) {
-					game = "No Debuff";
+			if (message.equals("[Match] キューから抜けました")) {
+				this.lobby(false);
+			}
+
+			if (message.contains("[1vs1] 対戦相手が見つかりました！")) {
+				String opponent = message.replace("[1vs1]", "");
+				opponent = opponent.replace("対戦相手が見つかりました！", "");
+				opponent = opponent.replace("相手:", "");
+				this.opponent = opponent.trim();
+			}
+
+			if (message.equals("[Match] The match is starting in 10 seconds...")) {
+				// Detect opponent from scoreboard
+				ScoreObjective scoreObjective = Minecraft.getMinecraft().theWorld.getScoreboard().getObjectiveInDisplaySlot(1);
+
+				Scoreboard scoreboard = scoreObjective.getScoreboard();
+				if (scoreboard != null) {
+					String detectedName = "#unknown";
+					boolean nextIsName = false;
+
+					for (Score score : scoreboard.getSortedScores(scoreObjective)) {
+						String line = ChatColor.stripColor(ScorePlayerTeam.formatPlayerName(scoreboard.getPlayersTeam(score.getPlayerName()), score.getPlayerName())).trim();
+
+						if (nextIsName) {
+							nextIsName = false;
+							if (!line.equals(this.getName()) && !line.equals("")) {
+								detectedName = line;
+							}
+						}
+
+						if (line.startsWith("Team ") && line.endsWith(":")) {
+							nextIsName = true;
+						}
+					}
+
+					if (detectedName != null) {
+						this.connect("Opponent: " + this.opponent, null);
+					}
 				}
-				this.connect("Searching an opponent...", "Game: " + game.replace(".", ""));
-			}
-
-			if(message.endsWith("に参加しました。プレイヤーが見つかりまでお待ち下さい")) {
-				String game = message.split("に参加しました。プレイヤーが見つかりまでお待ち下さい")[0];
-				this.connect("Searching an opponent...", "Game: " + game);
-			}
-
-			if(message.equals("参加をキャンセルしました") || message.equals("You cancelled queue.")) {
-				this.connect("Lobby", null);
 			}
 		}
 
+	}
+
+	public void lobby(boolean multithreading) {
+		ThreadPool.run(() -> {
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+
+			Minecraft.getMinecraft().addScheduledTask(() -> {
+				String coins = "";
+				String kills = "";
+
+				ScoreObjective scoreObjective = Minecraft.getMinecraft().theWorld.getScoreboard().getObjectiveInDisplaySlot(1);
+
+				Scoreboard scoreboard = scoreObjective.getScoreboard();
+				if (scoreboard != null) {
+					for (Score score : scoreboard.getSortedScores(scoreObjective)) {
+						String line = ChatColor.stripColor(ScorePlayerTeam.formatPlayerName(scoreboard.getPlayersTeam(score.getPlayerName()), score.getPlayerName()));
+
+						if (line.startsWith("Coins: ")) {
+							coins = line.replace("Coins: ", "");
+						}
+
+						if (line.startsWith("Kills: ")) {
+							kills = line.replace("Kills: ", "");
+						}
+					}
+				}
+
+				this.connect("Coins: " + coins, "Kills: " + kills);
+			});
+		});
 	}
 
 	public void connect(String detail, String state) {
@@ -144,8 +213,10 @@ public class Main {
 			}
 			RichPresence.Builder presence = new RichPresence.Builder();
 			presence.setDetails(detail);
-			presence.setState(state);
-			if(this.offsetDateTime == null) {
+			if (state != null) {
+				presence.setState(state);
+			}
+			if (this.offsetDateTime == null) {
 				this.offsetDateTime = OffsetDateTime.now();
 			}
 			presence.setStartTimestamp(this.offsetDateTime);
@@ -155,10 +226,14 @@ public class Main {
 	}
 
 	public void disconnect() {
-		if(this.ipcClient != null) {
+		if (this.ipcClient != null) {
 			this.ipcClient.close();
 			this.ipcClient = null;
 		}
+	}
+
+	public String getName() {
+		return Minecraft.getMinecraft().thePlayer.getName();
 	}
 
 }
