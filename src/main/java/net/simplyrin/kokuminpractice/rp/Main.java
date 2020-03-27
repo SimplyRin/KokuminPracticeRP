@@ -47,7 +47,7 @@ import net.simplyrin.kokuminpractice.rp.utils.ThreadPool;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-@Mod(modid = "KokuminPracitceRP", version = "1.2")
+@Mod(modid = "KokuminPracitceRP", version = "1.2.1")
 public class Main {
 
 	private IPCClient _default;
