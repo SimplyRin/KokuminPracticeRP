@@ -154,7 +154,18 @@ public class Main {
 
 			Minecraft.getMinecraft().addScheduledTask(() -> {
 				String coins = this.getScoreboardFromKey("Coins");
+				try {
+					int iCoins = Integer.parseInt(coins);
+					coins = String.format("%,d", iCoins);
+				} catch (Exception e) {
+				}
+
 				String kills = this.getScoreboardFromKey("Kills");
+				try {
+					int iKills = Integer.parseInt(kills);
+					kills = String.format("%,d", iKills);
+				} catch (Exception e) {
+				}
 
 				this.connect("Coins: " + coins, "Kills: " + kills);
 			});
