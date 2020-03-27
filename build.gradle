@@ -21,7 +21,7 @@ compileJava {
     options.encoding = defaultEncoding
 }
 
-version = "1.2"
+version = "1.2.1"
 group= "com.yourname.modid"
 archivesBaseName = "KokuminPracticeRP"
 
@@ -38,7 +38,7 @@ repositories {
 dependencies {
 	provided 'org.projectlombok:lombok:1.18.0'
 
-	compile files('libs/DiscordRP-1.1.1.jar')
+	compile files('libs/DiscordRP-1.2.2.jar')
 }
 
 processResources {
