@@ -132,7 +132,7 @@ public class Main {
 				return;
 			}
 
-			if (message.equals("FFAに参加しました")) {
+			if (message.equals("You joined FFA") || message.equals("FFAに参加しました")) {
 				this.connect("Playing FFA", null);
 				return;
 			}
